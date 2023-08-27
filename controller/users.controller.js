@@ -83,8 +83,24 @@ const logoutUser = async (req, res, next) => {
 	}
 };
 
+const currentUser = async (req, res, next) => {
+	try {
+		const currentUser = req.user;
+		res.status(200).json({
+			status: "success",
+			code: 200,
+			data: {
+				currentUser,
+			},
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
 module.exports = {
 	registerUser,
 	loginUser,
 	logoutUser,
+	currentUser,
 };
