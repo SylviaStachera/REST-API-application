@@ -72,7 +72,7 @@ const loginUser = async (req, res, next) => {
 
 const logoutUser = async (req, res, next) => {
 	try {
-		await userService.logout(req.params.id);
+		await userService.logout(req.user._doc._id);
 		res.json({
 			status: "success",
 			code: 200,

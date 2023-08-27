@@ -1,27 +1,18 @@
 const passport = require("passport");
-const passportJWT = require("passport-jwt");
-const User = require("../models/users.model");
-require("dotenv").config();
 
-const ExtractJWT = passportJWT.ExtractJwt;
-const Strategy = passportJWT.Strategy;
-const params = {
-	secretOrKey: process.env.SECRET_KEY,
-	jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
+const auth = (req, res, next) => {
+	// console.log(req.headers.authorization);
+	passport.authenticate("jwt", { session: false }, (err, user) => {
+		if (err || !user) {
+			return res.status(401).json({
+				status: "fail",
+				code: 401,
+				message: "Not authorized",
+			});
+		}
+		req.user = user;
+		next();
+	})(req, res, next);
 };
 
-passport.use(
-	new Strategy(params, function (payload, done) {
-		User.find({ _id: payload._doc._id })
-			.then(([user]) => {
-				if (!user) {
-					return done(new Error("User not found"));
-				}
-				if (!user.token) {
-					return done(new Error("User not logged in"));
-				}
-				return done(null, user);
-			})
-			.catch((err) => done(err));
-	})
-);
+module.exports = auth;

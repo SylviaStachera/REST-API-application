@@ -5,6 +5,8 @@ const cors = require("cors");
 require("dotenv").config();
 
 const contactsRouter = require("./routes/api/contacts.routes");
+const usersRouter = require("./routes/api/users.routes");
+const SRV_DB = process.env.DATABASE_URL;
 
 const app = express();
 
@@ -15,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 
 mongoose
-	.connect(process.env.DATABASE_URL, {
+	.connect(SRV_DB, {
 		dbName: "db-contacts",
 		useNewUrlParser: true,
 		useUnifiedTopology: true,
@@ -28,7 +30,9 @@ mongoose
 		process.exit(1);
 	});
 
+require("./config/config.passport");
 app.use("/api", contactsRouter);
+app.use("/api", usersRouter);
 
 app.use((req, res) => {
 	res.status(404).json({ message: "Not found" });
