@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const gravatar = require("gravatar");
 const userService = require("../services/users.service");
 
 const userSchema = Joi.object({
@@ -26,7 +27,13 @@ const registerUser = async (req, res, next) => {
 			});
 		}
 
-		const newUser = await userService.register(req.body);
+		const avatarURL = gravatar.url(req.body.email, {
+			s: "200",
+			r: "pg",
+			d: "404",
+		});
+
+		const newUser = await userService.register(req.body, avatarURL);
 		res.status(201).json({
 			status: "success",
 			code: 201,
