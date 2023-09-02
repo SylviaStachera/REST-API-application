@@ -40,7 +40,7 @@ const registerUser = async (req, res, next) => {
 
 		const verificationToken = uuidv4();
 
-		const newUser = await userService.register(req.body, avatarURL, verificationToken);
+		const newUser = await userService.register({ ...req.body, avatarURL, verificationToken });
 
 		await emailService.sendVerificationEmail(newUser.email, verificationToken);
 
@@ -144,13 +144,22 @@ const updateAvatar = async (req, res, next) => {
 const verifyUser = async (req, res, next) => {
 	try {
 		const { verificationToken } = req.params;
+
+		if (!verificationToken) {
+			return res.status(400).json({
+				status: "fail",
+				code: 400,
+				message: "Missing verification token",
+			});
+		}
+
 		const user = await userService.verifyUser(verificationToken);
 
 		if (!user) {
 			return res.status(404).json({
 				status: "fail",
 				code: 404,
-				message: "Not Found",
+				message: "User not found",
 			});
 		}
 
