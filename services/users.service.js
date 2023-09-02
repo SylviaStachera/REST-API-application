@@ -18,10 +18,10 @@ const getUserByEmial = async (email) => {
 	return User.findOne({ email });
 };
 
-const register = async ({ email, password }) => {
+const register = async ({ email, password, verificationToken }) => {
 	try {
 		const hashedPassword = await hashPassword(password);
-		const newUser = new User({ email, password: hashedPassword });
+		const newUser = new User({ email, password: hashedPassword, verificationToken });
 		await newUser.save();
 		return newUser;
 	} catch (error) {
@@ -69,10 +69,29 @@ const updateAvatarUrl = async (id, avatarURL) => {
 	}
 };
 
+const verifyUser = async (verificationToken) => {
+	try {
+		const user = await User.findOne({ verificationToken });
+
+		if (!user) {
+			return null;
+		}
+
+		user.verificationToken = null;
+		user.verify = true;
+		await user.save();
+
+		return user;
+	} catch (error) {
+		console.error(error);
+	}
+};
+
 module.exports = {
 	getUserByEmial,
 	register,
 	login,
 	logout,
 	updateAvatarUrl,
+	verifyUser,
 };

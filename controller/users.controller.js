@@ -3,7 +3,9 @@ const Jimp = require("jimp");
 const gravatar = require("gravatar");
 const fs = require("fs/promises");
 const path = require("path");
+const { v4: uuidv4 } = require("uuid");
 const userService = require("../services/users.service");
+const emailService = require("../services/email.service");
 
 const userSchema = Joi.object({
 	email: Joi.string().email().required(),
@@ -36,13 +38,19 @@ const registerUser = async (req, res, next) => {
 			d: "404",
 		});
 
-		const newUser = await userService.register(req.body, avatarURL);
+		const verificationToken = uuidv4();
+
+		const newUser = await userService.register(req.body, avatarURL, verificationToken);
+
+		await emailService.sendVerificationEmail(newUser.email, verificationToken);
+
 		res.status(201).json({
 			status: "success",
 			code: 201,
 			data: {
 				...newUser.toObject(),
 				avatarURL,
+				verificationToken,
 			},
 		});
 	} catch (error) {
@@ -133,10 +141,78 @@ const updateAvatar = async (req, res, next) => {
 	}
 };
 
+const verifyUser = async (req, res, next) => {
+	try {
+		const { verificationToken } = req.params;
+		const user = await userService.verifyUser(verificationToken);
+
+		if (!user) {
+			return res.status(404).json({
+				status: "fail",
+				code: 404,
+				message: "Not Found",
+			});
+		}
+
+		return res.status(200).json({
+			status: "success",
+			code: 200,
+			message: "Verification successful",
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+const resendVerificationEmail = async (req, res, next) => {
+	try {
+		const { email } = req.body;
+
+		if (!email) {
+			return res.status(400).json({
+				status: "fail",
+				code: 400,
+				message: "missing required field email",
+			});
+		}
+
+		const user = await userService.getUserByEmail(email);
+		if (!user) {
+			return res.status(400).json({
+				status: "fail",
+				code: 400,
+				message: "User not found",
+			});
+		}
+
+		if (user.verify) {
+			return res.status(400).json({
+				status: "fail",
+				code: 400,
+				message: "Verification has already been passed",
+			});
+		}
+
+		const newVerificationToken = uuidv4();
+
+		await emailService.sendVerificationEmail(email, newVerificationToken);
+
+		return res.status(200).json({
+			status: "success",
+			code: 200,
+			message: "Verification email sent",
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
 module.exports = {
 	registerUser,
 	loginUser,
 	logoutUser,
 	currentUser,
 	updateAvatar,
+	verifyUser,
+	resendVerificationEmail,
 };
