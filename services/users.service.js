@@ -77,7 +77,6 @@ const verifyUser = async (verificationToken) => {
 			return null;
 		}
 
-		user.verificationToken = null;
 		user.verify = true;
 		await user.save();
 

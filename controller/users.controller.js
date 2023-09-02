@@ -185,7 +185,7 @@ const resendVerificationEmail = async (req, res, next) => {
 			});
 		}
 
-		const user = await userService.getUserByEmail(email);
+		const user = await userService.getUserByEmial(email);
 		if (!user) {
 			return res.status(400).json({
 				status: "fail",
